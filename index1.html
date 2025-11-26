@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Subscription Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root{
+      --bg: #0f172a;
+      --panel: #020617;
+      --muted: #9ca3af;
+      --text: #e5e7eb;
+      --border: #1f2937;
+      --accent: #2563eb;
+      --danger: #ef4444;
+      --alert-bg: #78350f;
+      --card-radius: 8px;
+    }
+    .theme-light {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --muted: #6b7280;
+      --text: #0f172a;
+      --border: #e6edf3;
+      --accent: #2563eb;
+      --danger: #b91c1c;
+      --alert-bg: #f59e0b;
+    }
+    .theme-custom {
+      --bg: #fffaf0;
+      --panel: #fff7ed;
+      --muted: #7c5a2f;
+      --text: #4b2e0b;
+      --border: #f0d7c0;
+      --accent: #d97706;
+      --danger: #dc2626;
+      --alert-bg: #92400e;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+    .app-header {
+      background-color: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .app-header-left { display:flex; gap:12px; align-items:center; }
+    .app-header-title {
+      margin: 0;
+      font-size: 20px;
+    }
+    .app-header-subtitle {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .profile {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .profile .avatar {
+      width:36px; height:36px; border-radius:999px;
+      background:linear-gradient(135deg,var(--accent),#7c3aed);
+      display:inline-flex; align-items:center; justify-content:center;
+      color:white; font-weight:600;
+    }
+    .profile-actions { display:flex; gap:8px; align-items:center; }
+
+    .container {
+      max-width: 960px;
+      margin: 12px auto;
+      padding: 12px;
+    }
+    .controls-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    select,input[type="email"]{ padding:6px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel); color:var(--text); }
+
+    .stats-section h2,
+    .list-section h2,
+    .form-section h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+    .layout-two-columns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .list-section,
+    .form-section {
+      flex: 1 1 280px;
+      min-width: 0;
+    }
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .stat-box {
+      flex: 1 1 120px;
+      min-width: 120px;
+      background-color: var(--panel);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .stat-value { font-size: 18px; font-weight: 600; }
+
+    .alert-bar {
+      margin: 10px 0 18px 0;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background-color: var(--alert-bg);
+      color: #fef3c7;
+      font-size: 14px;
+    }
+    .alert-bar-strong { font-weight: 600; }
+    .card {
+      background-color: var(--panel);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color:var(--text);
+    }
+    .card-row { display: flex; justify-content: space-between; gap: 12px; }
+    .card-title { font-weight: 600; margin-bottom: 2px; }
+    .card-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .card-price-block { text-align: right; white-space: nowrap; }
+    .card-price { font-weight: 600; }
+    .card-next { font-size: 12px; color: var(--muted); }
+    .status-line { margin-top: 6px; font-size: 13px; }
+    .status-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; margin-right: 6px; border: 1px solid transparent; }
+    .status-active { background-color: rgba(16,185,129,0.12); border-color: #10b981; color: #065f46; }
+    .status-expiring { background-color: rgba(245,158,11,0.12); border-color: #f59e0b; color: #7c2d12; }
+    .status-expired { background-color: rgba(239,68,68,0.12); border-color: var(--danger); color: #7f1d1d; }
+    .card-notes { margin-top: 6px; font-size: 12px; color: var(--muted); }
+    .card-footer { margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .delete-button { border-radius: 4px; border: 1px solid #b91c1c; background-color: rgba(185,28,28,0.12); color: #7f1d1d; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+    .primary-button { border-radius: 4px; border: none; background-color: var(--accent); color: white; padding: 6px 10px; font-size: 13px; cursor: pointer; }
+    .muted-btn { border-radius:4px; border:1px solid var(--border); background:transparent; color:var(--muted); padding:6px 8px; cursor:pointer; }
+
+    .form-section { background-color: var(--panel); border-radius: var(--card-radius); border: 1px solid var(--border); padding: 10px 12px 14px 12px; font-size: 14px; }
+    .form-field { margin-bottom: 8px; }
+    .form-field label { display: block; font-size: 12px; color: var(--text); margin-bottom: 2px; }
+    .form-field input, .form-field select, .form-field textarea { width: 100%; padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border); background-color: var(--panel); color: var(--text); font-size: 13px; }
+    .form-field textarea { resize: vertical; min-height: 50px; }
+    .checkbox-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; color: var(--text); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+
+    .send-email { background:transparent; border:1px solid var(--accent); color:var(--accent); padding:6px 8px; border-radius:6px; cursor:pointer; }
+    .modal-backdrop { position:fixed; left:0; right:0; top:0; bottom:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:1000; }
+    .modal { background:var(--panel); border:1px solid var(--border); padding:16px; border-radius:8px; width:320px; color:var(--text); }
+    .modal h3 { margin:0 0 8px 0; }
+    @media (max-width: 640px) {
+      .card-row { flex-direction: column; align-items: flex-start; }
+      .card-price-block { text-align: left; }
+      .app-header { flex-direction:column; align-items:flex-start; gap:8px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Firebase SDK for auth (placeholder config below) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- EmailJS client SDK (client-side send) -->
+  <script src="https://cdn.emailjs.com/sdk/2.3.2/email.min.js"></script>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+  <script>
+    const e = React.createElement;
+    const { useState, useEffect, useMemo } = React;
+
+    // ---------- CONFIGURATION ----------
+    // Firebase config: replace with your project's config
+    const FIREBASE_CONFIG = {
+      apiKey: "REPLACE_WITH_FIREBASE_API_KEY",
+      authDomain: "REPLACE_WITH_FIREBASE_AUTH_DOMAIN",
+      projectId: "REPLACE_WITH_FIREBASE_PROJECT_ID",
+      // ...other keys as provided by Firebase console
+    };
+
+    // EmailJS configuration: create an account at https://www.emailjs.com/
+    // - serviceID: the email service (e.g. 'gmail' or your configured service)
+    // - templateID: template id that expects variables below (subject, to_email, message)
+    // - userID: public user key
+    const EMAILJS_SERVICE_ID = "REPLACE_WITH_EMAILJS_SERVICE_ID";
+    const EMAILJS_TEMPLATE_ID = "REPLACE_WITH_EMAILJS_TEMPLATE_ID";
+    const EMAILJS_USER_ID = "REPLACE_WITH_EMAILJS_USER_ID";
+    // -----------------------------------
+
+    // initialize firebase (auth)
+    if (typeof firebase !== "undefined" && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.authDomain) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      var firebaseAuth = firebase.auth();
+    } else {
+      var firebaseAuth = null;
+      console.warn("Firebase not initialized. Provide FIREBASE_CONFIG to enable authentication.");
+    }
+
+    // initialize EmailJS if keys present
+    if (window.emailjs && EMAILJS_USER_ID && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID) {
+      try { emailjs.init(EMAILJS_USER_ID); } catch (err) { console.warn("emailjs init failed", err); }
+    } else {
+      console.warn("EmailJS keys not configured; client-side auto email won't work until configured.");
+    }
+
+    function daysUntil(dateString) {
+      const today = new Date();
+      const target = new Date(dateString);
+      if (isNaN(target.getTime())) return 0;
+      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const end = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+      const diffMs = end - start;
+      return Math.round(diffMs / (1000 * 60 * 60 * 24));
+    }
+
+    function getStatusFromDays(daysLeft) {
+      if (daysLeft < 0) return "Expired";
+      if (daysLeft === 0) return "Due today";
+      if (daysLeft <= 7) return "Expiring soon";
+      return "Active";
+    }
+
+    function humanizeDays(days) {
+      if (days === 0) return "today";
+      if (days > 0) {
+        if (days < 7) return "in " + days + " day" + (days === 1 ? "" : "s");
+        if (days < 30) return "in " + Math.round(days/7) + " week" + (Math.round(days/7) === 1 ? "" : "s");
+        return "in " + Math.round(days/30) + " month" + (Math.round(days/30) === 1 ? "" : "s");
+      } else {
+        const past = Math.abs(days);
+        if (past < 7) return past + " day" + (past === 1 ? "" : "s") + " ago";
+        if (past < 30) return Math.round(past/7) + " week" + (Math.round(past/7) === 1 ? "" : "s") + " ago";
+        return Math.round(past/30) + " month" + (Math.round(past/30) === 1 ? "" : "s") + " ago";
+      }
+    }
+
+    function formatDate(dateString) {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return "-";
+      return d.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+    }
+
+    function formatPrice(amount, currency) {
+      if (currency === "INR") {
+        const rate = 83.5; // example conversion rate
+        const inr = amount * rate;
+        try { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(inr); }
+        catch (err) { return "₹" + inr.toFixed(0); }
+      } else {
+        try { return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(amount); }
+        catch (err) { return "$" + amount.toFixed(2); }
+      }
+    }
+
+    // Email sending helper using EmailJS (client) or fallback to mailto
+    function sendEmail(payload) {
+      // payload: { to_email, subject, message }
+      if (window.emailjs && EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID) {
+        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          to_email: payload.to_email,
+          subject: payload.subject,
+          message: payload.message
+        }).then((resp) => ({ ok: true, resp })).catch((err) => ({ ok: false, err }));
+      } else {
+        // fallback: open mail client compose for user to send
+        const mailto = "mailto:" + encodeURIComponent(payload.to_email || "") +
+                       "?subject=" + encodeURIComponent(payload.subject || "") +
+                       "&body=" + encodeURIComponent(payload.message || "");
+        window.open(mailto, "_blank");
+        return Promise.resolve({ ok: false, fallback: true });
+      }
+    }
+
+    const initialSubscriptions = [
+      { id: 1, name: "Notion", role: "Student", appType: "Notes & Planning", price: 4.0, billingCycle: "Monthly", nextPaymentDate: "2025-12-01", autoRenew: true, notes: "Student plan." },
+      { id: 2, name: "Microsoft 365", role: "Both", appType: "Office Suite", price: 69.99, billingCycle: "Yearly", nextPaymentDate: "2025-11-30", autoRenew: true, notes: "Used for Office." },
+      { id: 3, name: "Canva Pro", role: "Student", appType: "Design", price: 7.0, billingCycle: "Monthly", nextPaymentDate: "2025-11-20", autoRenew: false, notes: "For posters." }
+    ];
+
+    // Header component with login modal toggle
+    function Header(props) {
+      const { profile, onShowLogin, onLogout, currency, setCurrency, theme, setTheme } = props;
+      return e("header", { className: "app-header" },
+        e("div", { className: "app-header-left" },
+          e("div", null,
+            e("h1", { className: "app-header-title" }, "Subscription Tracker"),
+            e("div", { className: "app-header-subtitle" }, "Reminder for your subscriptions")
+          )
+        ),
+        e("div", { className: "profile" },
+          profile && profile.logged
+            ? e("div", { style: { display: "flex", alignItems: "center", gap:8 } },
+                e("div", { className: "avatar" }, (profile.name || "U").slice(0,1).toUpperCase()),
+                e("div", null,
+                  e("div", { style: { fontWeight:600, color: "var(--text)" } }, profile.name || profile.email),
+                  e("div", { style: { fontSize:12, color: "var(--muted)" } }, profile.email)
+                )
+              )
+            : e("div", { style: { color: "var(--muted)" } }, "Not signed in")
+        ),
+        e("div", { className: "profile-actions" },
+          e("select", { value: theme, onChange: (ev) => setTheme(ev.target.value) },
+            e("option", { value: "dark" }, "Theme: Dark"),
+            e("option", { value: "light" }, "Theme: Light"),
+            e("option", { value: "custom" }, "Theme: Custom")
+          ),
+          e("select", { value: currency, onChange: (ev) => setCurrency(ev.target.value) },
+            e("option", { value: "INR" }, "INR"),
+            e("option", { value: "USD" }, "USD")
+          ),
+          profile && profile.logged
+            ? e("button", { className: "muted-btn", onClick: onLogout }, "Logout")
+            : e("button", { className: "primary-button", onClick: onShowLogin }, "Login / Sign up")
+        )
+      );
+    }
+
+    function StatsBar(props) {
+      const stats = props.stats;
+      return e("section", { className: "stats-section container" },
+        e("h2", null, "Overview"),
+        e("div", { className: "stats-row" },
+          e("div", { className: "stat-box" }, e("div", { className: "stat-label" }, "Active"), e("div", { className: "stat-value" }, String(stats.active))),
+          e("div", { className: "stat-box" }, e("div", { className: "stat-label" }, "Due soon"), e("div", { className: "stat-value" }, String(stats.expiring))),
+          e("div", { className: "stat-box" }, e("div", { className: "stat-label" }, "Expired"), e("div", { className: "stat-value" }, String(stats.expired)))
+        )
+      );
+    }
+
+    function AlertBar(props) {
+      const { expiringCount, expiredCount, onSendAll, profile, autoSendToggle, onToggleAutoSend } = props;
+      if (expiringCount === 0 && expiredCount === 0) return null;
+      const parts = [];
+      if (expiringCount > 0) parts.push(expiringCount + " due within 7 days");
+      if (expiredCount > 0) parts.push(expiredCount + " already expired");
+      const msg = parts.join(" · ");
+      return e("div", { className: "container" },
+        e("div", { className: "alert-bar" },
+          e("span", { className: "alert-bar-strong" }, "Reminder: "), " ", msg,
+          profile && profile.logged && profile.email
+            ? e("span", null, " ",
+                e("button", { className: "send-email", onClick: onSendAll }, "Email reminders"),
+                " ",
+                e("label", { style: { marginLeft: 8, fontSize: 13 } },
+                  e("input", { type: "checkbox", checked: !!autoSendToggle, onChange: (ev) => onToggleAutoSend(ev.target.checked) }),
+                  " Auto-send reminders on login"
+                )
+              )
+            : null
+        )
+      );
+    }
+
+    function SubscriptionCard(props) {
+      const { sub, onDelete, currency, profile } = props;
+      let badgeClass = "status-badge ";
+      if (sub.status === "Expired") badgeClass += "status-expired";
+      else if (sub.status === "Expiring soon" || sub.status === "Due today") badgeClass += "status-expiring";
+      else badgeClass += "status-active";
+
+      const statusText = sub.status === "Due today" ? "due today" : humanizeDays(sub.daysLeft);
+
+      function sendReminder() {
+        const to = (profile && profile.logged && profile.email) ? profile.email : "";
+        const subject = `${sub.name} subscription reminder`;
+        const message = [
+          `Hi ${profile && profile.name ? profile.name : ""},`,
+          "",
+          `This is a reminder that your subscription to ${sub.name} (${sub.appType}) is ${statusText}.`,
+          `Next payment: ${formatDate(sub.nextPaymentDate)}`,
+          `Price: ${formatPrice(sub.price, currency)} (${sub.billingCycle})`,
+          ``,
+          `Notes: ${sub.notes || "-"}`,
+          "",
+          "Sent by SubTrackr"
+        ].join("\n");
+
+        sendEmail({ to_email: to, subject, message })
+          .then(result => {
+            if (result.ok) alert("Reminder sent.");
+            else if (result.fallback) alert("Compose window opened. Please send manually.");
+            else alert("Failed to send reminder.");
+          });
+      }
+
+      return e("div", { className: "card" },
+        e("div", { className: "card-row" },
+          e("div", null,
+            e("div", { className: "card-title" }, sub.name),
+            e("div", { className: "card-subtitle" }, sub.appType + " · " + sub.role),
+            e("div", { className: "status-line" },
+              e("span", { className: badgeClass }, sub.status), " ", statusText
+            ),
+            e("div", { className: "card-next" }, "Next payment: ", formatDate(sub.nextPaymentDate))
+          ),
+          e("div", { className: "card-price-block" },
+            e("div", { className: "card-price" }, formatPrice(sub.price, currency) + (sub.billingCycle === "Monthly" ? " /mo" : " /yr")),
+            e("div", { className: "card-next" }, sub.autoRenew ? "Automatically renews" : "Manual renewal")
+          )
+        ),
+        sub.notes ? e("div", { className: "card-notes" }, "Notes: ", sub.notes) : null,
+        e("div", { className: "card-footer" },
+          e("div", null,
+            (sub.status === "Expiring soon" || sub.status === "Due today") && e("button", { className: "send-email", onClick: sendReminder }, "Email reminder")
+          ),
+          e("div", null,
+            e("button", { className: "delete-button", onClick: () => onDelete(sub.id) }, "Delete")
+          )
+        )
+      );
+    }
+
+    function SubscriptionList(props) {
+      const subs = props.subscriptions;
+      if (!subs || subs.length === 0) {
+        return e("p", { className: "empty-text" }, "No subscriptions yet. Use the form to add one.");
+      }
+      return e("div", null, subs.map((sub) => e(SubscriptionCard, { key: sub.id, sub, onDelete: props.onDelete, currency: props.currency, profile: props.profile })));
+    }
+
+    function SubscriptionForm(props) {
+      const { onAdd } = props;
+      const [name, setName] = useState("");
+      const [role, setRole] = useState("Student");
+      const [appType, setAppType] = useState("");
+      const [price, setPrice] = useState("");
+      const [billingCycle, setBillingCycle] = useState("Monthly");
+      const [nextPaymentDate, setNextPaymentDate] = useState("");
+      const [autoRenew, setAutoRenew] = useState(true);
+      const [notes, setNotes] = useState("");
+
+      function handleSubmit(ev) {
+        ev.preventDefault();
+        if (!name || !price || !nextPaymentDate) {
+          alert("Please fill in name, price, and next payment date.");
+          return;
+        }
+        const priceNumber = parseFloat(price);
+        if (isNaN(priceNumber) || priceNumber < 0) {
+          alert("Please enter a valid price.");
+          return;
+        }
+        const newSub = { id: Date.now(), name: name.trim(), role, appType: appType.trim() || "Other", price: priceNumber, billingCycle, nextPaymentDate, autoRenew, notes: notes.trim() };
+        onAdd(newSub);
+        setName(""); setRole("Student"); setAppType(""); setPrice(""); setBillingCycle("Monthly"); setNextPaymentDate(""); setAutoRenew(true); setNotes("");
+      }
+
+      return e("form", { onSubmit: handleSubmit },
+        e("h2", null, "Add subscription"),
+        e("div", { className: "form-field" }, e("label", null, "App name (required)"), e("input", { type: "text", value: name, onChange: (ev) => setName(ev.target.value), placeholder: "Notion, Canva..." })),
+        e("div", { className: "form-field" }, e("label", null, "Purpose"), e("input", { type: "text", value: appType, onChange: (ev) => setAppType(ev.target.value), placeholder: "Design, notes..." })),
+        e("div", { className: "form-field" }, e("label", null, "Used by"), e("select", { value: role, onChange: (ev) => setRole(ev.target.value) },
+          e("option", { value: "Student" }, "Student"), e("option", { value: "Employee" }, "Employee"), e("option", { value: "Both" }, "Both"), e("option", { value: "Personal" }, "Personal")
+        )),
+        e("div", { className: "form-field" }, e("label", null, "Price (USD) *"), e("input", { type: "number", step: "0.01", value: price, onChange: (ev) => setPrice(ev.target.value), placeholder: "0.00" })),
+        e("div", { className: "form-field" }, e("label", null, "Billing cycle"), e("select", { value: billingCycle, onChange: (ev) => setBillingCycle(ev.target.value) },
+          e("option", { value: "Monthly" }, "Monthly"), e("option", { value: "Yearly" }, "Yearly")
+        )),
+        e("div", { className: "form-field" }, e("label", null, "Next payment date (required)"), e("input", { type: "date", value: nextPaymentDate, onChange: (ev) => setNextPaymentDate(ev.target.value) })),
+        e("div", { className: "checkbox-row" }, e("input", { type: "checkbox", checked: autoRenew, onChange: (ev) => setAutoRenew(ev.target.checked) }), e("span", null, "Automatically renews")),
+        e("div", { className: "form-field" }, e("label", null, "Notes"), e("textarea", { value: notes, onChange: (ev) => setNotes(ev.target.value), placeholder: "Paid by company, student discount..." })),
+        e("div", { className: "form-actions" }, e("button", { type: "submit", className: "primary-button" }, "Add subscription"))
+      );
+    }
+
+    // Login modal component (uses Firebase if configured, otherwise local fallback)
+    function LoginModal(props) {
+      const { onClose, onLoginSuccess } = props;
+      const [email, setEmail] = useState("");
+      const [password, setPassword] = useState("");
+      const [name, setName] = useState("");
+
+      function signupWithFirebase() {
+        if (!firebaseAuth) { alert("Firebase not configured. Use fallback login."); return; }
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+          .then((res) => {
+            // update display name
+            res.user.updateProfile({ displayName: name || "" }).then(() => {
+              // include uid so we can namespace storage
+              onLoginSuccess({ logged: true, name: name || "", email: email, uid: res.user.uid });
+            });
+          })
+          .catch(err => alert(err.message || "Sign up failed"));
+      }
+
+      function loginWithFirebase() {
+        if (!firebaseAuth) { alert("Firebase not configured. Use fallback login."); return; }
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+          .then((res) => {
+            // pass uid so data is loaded per-user
+            onLoginSuccess({ logged: true, name: res.user.displayName || "", email: res.user.email, uid: res.user.uid });
+          })
+          .catch(err => alert(err.message || "Login failed"));
+      }
+
+      function fallbackLogin() {
+        if (!email) { alert("Provide an email"); return; }
+        onLoginSuccess({ logged: true, name: name || "", email });
+      }
+
+      return e("div", { className: "modal-backdrop" },
+        e("div", { className: "modal" },
+          e("h3", null, "Sign in / Sign up"),
+          e("div", { className: "form-field" }, e("label", null, "Name (optional)"), e("input", { value: name, onChange: (ev) => setName(ev.target.value) })),
+          e("div", { className: "form-field" }, e("label", null, "Email"), e("input", { type: "email", value: email, onChange: (ev) => setEmail(ev.target.value) })),
+          e("div", { className: "form-field" }, e("label", null, "Password"), e("input", { type: "password", value: password, onChange: (ev) => setPassword(ev.target.value) })),
+          e("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 } },
+            e("button", { className: "muted-btn", onClick: onClose }, "Cancel"),
+            e("button", { className: "muted-btn", onClick: fallbackLogin }, "Quick sign-in"),
+            e("button", { className: "primary-button", onClick: loginWithFirebase }, "Sign in (Firebase)"),
+            e("button", { className: "primary-button", onClick: signupWithFirebase }, "Sign up (Firebase)")
+          )
+        )
+      );
+    }
+
+    function App() {
+      // helper to build per-user storage key
+      function storageKeyFor(profileState) {
+        if (!profileState || !profileState.logged) return "subscription-tracker:guest";
+        // prefer uid, otherwise use email (sanitised)
+        const id = profileState.uid || profileState.email || ("user:" + (profileState.name || "unknown"));
+        return "subscription-tracker:user:" + encodeURIComponent(String(id).toLowerCase());
+      }
+
+      // helper to load subscriptions for profile (returns array)
+      function loadSubscriptionsFor(profileState) {
+        const key = storageKeyFor(profileState);
+        const raw = window.localStorage.getItem(key);
+        if (!raw) {
+          // for guests show a small demo set, for logged users start empty (keeps user data private)
+          return profileState && profileState.logged ? [] : initialSubscriptions;
+        }
+        try { return JSON.parse(raw) || []; } catch (err) { return []; }
+      }
+
+      const [subscriptions, setSubscriptions] = useState(() => {
+        // choose initial list based on currently persisted profile
+        const storedProfile = (function(){ try { return JSON.parse(window.localStorage.getItem("sub-profile") || "null"); } catch(e){ return null; } })();
+        return loadSubscriptionsFor(storedProfile);
+      });
+
+      // profile stored locally; if Firebase used, on page load try to pick up current user
+      const [profile, setProfile] = useState(() => {
+        const p = window.localStorage.getItem("sub-profile");
+        if (p) try { return JSON.parse(p); } catch(e) {}
+        return { logged: false, name: "", email: "", autoSend: false };
+      });
+      
+      // Persist subscriptions per-user/guest whenever it changes
+      useEffect(() => {
+        const key = storageKeyFor(profile);
+        try { window.localStorage.setItem(key, JSON.stringify(subscriptions)); }
+        catch(e) { console.warn("Could not persist subscriptions", e); }
+      }, [subscriptions, profile]);
+
+      const [currency, setCurrency] = useState(() => window.localStorage.getItem("sub-currency") || "INR");
+      const [theme, setTheme] = useState(() => window.localStorage.getItem("sub-theme") || "dark");
+      const [showLogin, setShowLogin] = useState(false);
+
+      useEffect(() => { window.localStorage.setItem("subscription-tracker-data", JSON.stringify(subscriptions)); }, [subscriptions]);
+      useEffect(() => { window.localStorage.setItem("sub-profile", JSON.stringify(profile)); }, [profile]);
+      useEffect(() => { window.localStorage.setItem("sub-currency", currency); }, [currency]);
+      useEffect(() => { window.localStorage.setItem("sub-theme", theme); document.documentElement.classList.remove("theme-light","theme-custom"); if (theme === "light") document.documentElement.classList.add("theme-light"); else if (theme === "custom") document.documentElement.classList.add("theme-custom"); }, [theme]);
+
+      // If Firebase auth is configured, keep profile in sync with Firebase session
+      useEffect(() => {
+        if (!firebaseAuth) return;
+        const unsub = firebaseAuth.onAuthStateChanged(user => {
+          if (user) {
+            const p = { logged: true, name: user.displayName || "", email: user.email, uid: user.uid, autoSend: profile.autoSend || false };
+            setProfile(p);
+            // load that user's subscriptions (do not show another account's data)
+            const forUser = loadSubscriptionsFor(p);
+            setSubscriptions(forUser);
+          } else {
+            // ensure UI hides user data when signed out
+            setProfile({ logged: false, name: "", email: "", autoSend: false });
+            // when signed out, switch to guest demo view (keeps previous user data private)
+            setSubscriptions(loadSubscriptionsFor({ logged: false }));
+          }
+        });
+        return () => unsub();
+        // eslint-disable-next-line
+      }, []);
+
+      const enriched = useMemo(() => subscriptions.map((sub) => { const days = daysUntil(sub.nextPaymentDate); const status = getStatusFromDays(days); return Object.assign({}, sub, { daysLeft: days, status }); }), [subscriptions]);
+
+      const stats = useMemo(() => {
+        let active = 0, expiring = 0, expired = 0;
+        enriched.forEach((s) => { if (s.status === "Expired") expired++; else if (s.status === "Expiring soon" || s.status === "Due today") expiring++; else active++; });
+        return { active, expiring, expired };
+      }, [enriched]);
+
+      function handleAddSubscription(newSub) { setSubscriptions((prev) => [...prev, newSub]); }
+      function handleDeleteSubscription(id) { setSubscriptions((prev) => prev.filter((s) => s.id !== id)); }
+
+      function handleShowLogin() { setShowLogin(true); }
+      function handleCloseLogin() { setShowLogin(false); }
+
+      function handleLoginSuccess(p) {
+        // p: { logged:true, name, email }
+        // include previous autoSend setting when present
+        const merged = Object.assign({}, p, { autoSend: profile.autoSend || false });
+        setProfile(merged);
+        setShowLogin(false);
+ 
+        // If auto-send is enabled, immediately send reminders for expiring items
+        if (profile.autoSend || (p.autoSend)) {
+          setTimeout(() => { sendAllRemindersInternal(p); }, 600);
+        }
+        // Load or create this user's subscription list (isolation per-account)
+        const userSubs = loadSubscriptionsFor(merged);
+        // If user has no saved subs but guest had items, optionally migrate — keep private by default.
+        setSubscriptions(userSubs);
+       }
+
+      function handleLogout() {
+        if (firebaseAuth) firebaseAuth.signOut().catch(()=>{});
+        // make sure to clear profile so UI hides user data immediately
+        setProfile({ logged: false, name: "", email: "", autoSend: false });
+        // switch to guest/demo view when logged out
+        setSubscriptions(loadSubscriptionsFor({ logged: false }));
+      }
+
+      function sendAllReminders() {
+        // exposed button, uses current profile stored in state
+        if (!profile || !profile.logged) { alert("Please sign in to send reminders"); return; }
+        sendAllRemindersInternal(profile);
+      }
+
+      function sendAllRemindersInternal(currentProfile) {
+        const list = enriched.filter(s => s.status === "Expiring soon" || s.status === "Due today");
+        if (list.length === 0) { alert("No subscriptions need reminders."); return; }
+        const to = currentProfile && currentProfile.logged && currentProfile.email ? currentProfile.email : "";
+        const subject = "Subscriptions expiring soon — SubTrackr";
+        let message = `Hi ${currentProfile.name || ""},\n\nThese subscriptions are due soon:\n\n`;
+        list.forEach(s => {
+          message += `${s.name} — ${formatDate(s.nextPaymentDate)} (${humanizeDays(s.daysLeft)}) — ${formatPrice(s.price, currency)}\n`;
+        });
+        message += `\nVisit your SubTrackr to manage them.\n\n— SubTrackr`;
+
+        sendEmail({ to_email: to, subject, message })
+          .then(result => {
+            if (result.ok) alert("Reminders sent.");
+            else if (result.fallback) alert("Compose window opened. Please send manually.");
+            else alert("Failed to send reminders.");
+          });
+      }
+
+      function toggleAutoSend(val) {
+        setProfile(prev => Object.assign({}, prev, { autoSend: !!val }));
+      }
+
+      // auto-send on page load if user already logged and autoSend enabled
+      useEffect(() => {
+        if (profile && profile.logged && profile.autoSend) {
+          // small delay to allow UI to render
+          setTimeout(() => sendAllRemindersInternal(profile), 800);
+        }
+        // eslint-disable-next-line
+      }, []);
+
+      // --- Render: show hero when logged out, show full dashboard when logged in ---
+      return e("div", null,
+        e(Header, { profile, onShowLogin: handleShowLogin, onLogout: handleLogout, currency, setCurrency, theme, setTheme }),
+
+        // if not signed in show hero / CTA and small preview (no personal data)
+        !profile || !profile.logged
+          ? e("main", { className: "container" },
+              // hero
+              e("section", { style: { margin: "24px 0 28px" } },
+                e("h1", { style: { fontSize: "44px", margin: "8px 0", lineHeight: 1.05 } }, "Never forget a ", e("span", { style: { color: "linear-gradient(90deg,#6ee7b7,#60a5fa)" } }, "renewal date"), " again."),
+                e("p", { style: { color: "var(--muted)", maxWidth: 720 } }, "Track your student & work apps, see costs and get clear reminders before a subscription renews or expires."),
+                e("div", { style: { marginTop: 18 } },
+                  e("button", { className: "primary-button", onClick: handleShowLogin }, "Start adding subscriptions"),
+                  e("span", { style: { marginLeft: 12, color: "var(--muted)" } }, "Your data stays in your browser.")
+                )
+              ),
+              // small 'upcoming' preview (non-personal sample)
+              e("section", { style: { marginTop: 16 } },
+                e("div", { className: "card" },
+                  e("h3", { style: { margin: 0 } }, "Upcoming renewals (preview)"),
+                  e("div", { style: { marginTop: 12, color: "var(--muted)" } }, "Sign in to see your personal subscriptions and reminders.")
+                )
+              )
+            )
+          // signed in -> full dashboard
+          : e("div", null,
+              // stats + alert shown only for signed in users
+              e(StatsBar, { stats }),
+              e(AlertBar, { expiringCount: stats.expiring, expiredCount: stats.expired, onSendAll: sendAllReminders, profile, autoSendToggle: profile.autoSend, onToggleAutoSend: toggleAutoSend }),
+    
+              e("main", { className: "container" },
+                e("div", { className: "controls-row" },
+                  e("div", null,
+                    e("label", { style: { fontSize:12, color:"var(--muted)", marginRight:6 } }, "Quick filter:"),
+                    e("select", { onChange: (ev)=>{ /* placeholder for real filter */ } },
+                      e("option", { value: "all" }, "All")
+                    )
+                  ),
+                  e("div", null, e("small", { style:{color:"var(--muted)"} }, "Currency shown in ", currency))
+                ),
+    
+                e("div", { className: "layout-two-columns" },
+                  e("section", { className: "list-section" },
+                    e("h2", null, "Your subscriptions"),
+                    // subscriptions only rendered when signed in; if guest, show friendly message
+                    profile && profile.logged
+                      ? e(SubscriptionList, { subscriptions: enriched, onDelete: handleDeleteSubscription, currency, profile })
+                      : e("div", { className: "card" },
+                          e("div", { className: "card-title" }, "Private view"),
+                          e("div", { className: "card-notes" }, "You are not signed in — your personal subscriptions are hidden. Sign in to view and manage them."),
+                          e("div", { className: "card-footer" },
+                            e("div", null),
+                            e("div", null, e("button", { className: "primary-button", onClick: handleShowLogin }, "Sign in"))
+                          )
+                        )
+                  ),
+                  e("section", { className: "form-section" },
+                    e(SubscriptionForm, { onAdd: handleAddSubscription })
+                  )
+                )
+              )
+            ),
+    
+        // login modal
+        showLogin ? e(LoginModal, { onClose: handleCloseLogin, onLoginSuccess: handleLoginSuccess }) : null
+      );
+    }
+
+    const rootElement = document.getElementById("root");
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(e(App));
+  </script>
+</body>
+</html>
